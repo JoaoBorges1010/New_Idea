@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as domains_bills_processing from "../domains/bills/processing.js";
 import type * as domains_dashboard_feed from "../domains/dashboard/feed.js";
+import type * as domains_dashboard_layout from "../domains/dashboard/layout.js";
 import type * as domains_documents_vault from "../domains/documents/vault.js";
 import type * as domains_families_members from "../domains/families/members.js";
 import type * as health from "../health.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "domains/bills/processing": typeof domains_bills_processing;
   "domains/dashboard/feed": typeof domains_dashboard_feed;
+  "domains/dashboard/layout": typeof domains_dashboard_layout;
   "domains/documents/vault": typeof domains_documents_vault;
   "domains/families/members": typeof domains_families_members;
   health: typeof health;

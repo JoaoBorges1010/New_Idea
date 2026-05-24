@@ -23,7 +23,18 @@ export default defineSchema({
 	userProfiles: defineTable({
 		userId: v.id('users'),
 		familyId: v.id('families'),
-		displayName: v.optional(v.string())
+		displayName: v.optional(v.string()),
+		dashboardLayout: v.optional(
+			v.array(
+				v.object({
+					id: v.string(),
+					x: v.number(),
+					y: v.number(),
+					w: v.number(),
+					h: v.number()
+				})
+			)
+		)
 	})
 		.index('by_user', ['userId'])
 		.index('by_family', ['familyId']),

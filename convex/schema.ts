@@ -31,7 +31,8 @@ export default defineSchema({
 					x: v.number(),
 					y: v.number(),
 					w: v.number(),
-					h: v.number()
+					h: v.number(),
+					locked: v.optional(v.boolean())
 				})
 			)
 		)

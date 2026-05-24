@@ -9,12 +9,12 @@
 	const feed = useQuery(api.domains.dashboard.feed.getAttentionFeed, {});
 </script>
 
-<Card.Root class="flex h-full flex-col rounded-xl border-border/80 shadow-sm">
-	<Card.Header class="pb-3">
+<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-0 shadow-none">
+	<Card.Header class="shrink-0 pb-3">
 		<Card.Title class="text-base">Attention feed</Card.Title>
 		<Card.Description>What needs your attention this week.</Card.Description>
 	</Card.Header>
-	<Card.Content class="min-h-0 flex-1 overflow-y-auto">
+	<Card.Content class="min-h-0 flex-1">
 		{#if feed.isLoading}
 			<p class="text-sm text-muted-foreground">Loading attention feed...</p>
 		{:else if feed.error}

@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
 	import { useAuth } from '@mmailaender/convex-auth-svelte/sveltekit';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import ThemeToggle from '$lib/components/ui/theme-toggle.svelte';
 
 	const auth = useAuth();
 	const isAuthenticated = $derived(auth.isAuthenticated);
@@ -9,7 +11,7 @@
 
 	let { children } = $props();
 
-	const navItems = [
+	const navItems: Array<{ href: string; label: string; disabled?: boolean }> = [
 		{ href: '/dashboard', label: 'Dashboard' },
 		{ href: '/vault', label: 'Vault' },
 		{ href: '/bills', label: 'Bills' },
@@ -19,37 +21,40 @@
 </script>
 
 {#if isLoading}
-	<div class="flex min-h-screen items-center justify-center text-slate-500">Loading...</div>
+	<div class="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>
 {:else if isAuthenticated}
-	<div class="min-h-screen bg-slate-50">
-		<header class="border-b border-slate-200 bg-white">
-			<div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+	<div class="min-h-screen bg-background">
+		<header class="sticky top-0 z-40 px-4 pt-4">
+			<div
+				class="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-border bg-background/80 px-4 py-2 shadow-sm backdrop-blur-md"
+			>
 				<div>
-					<p class="text-sm font-semibold text-indigo-600">FamilyOS</p>
-					<p class="text-xs text-slate-500">Multi-domain household platform</p>
+					<p class="text-sm font-semibold tracking-tight text-primary">FamilyOS</p>
+					<p class="text-xs text-muted-foreground">Household platform</p>
 				</div>
-				<nav class="flex items-center gap-4">
+				<nav class="flex items-center gap-1 md:gap-3">
 					{#each navItems as item (item.href)}
 						{#if item.disabled}
-							<span class="cursor-not-allowed text-sm text-slate-300">{item.label}</span>
+							<span class="cursor-not-allowed px-2 text-sm text-muted-foreground/50"
+								>{item.label}</span
+							>
 						{:else}
 							<a
-								href={resolve(item.href)}
-								class="text-sm font-medium {$page.url.pathname.startsWith(item.href)
-									? 'text-indigo-600'
-									: 'text-slate-600 hover:text-slate-900'}"
+								href={resolve(item.href as '/dashboard')}
+								class="rounded-full px-3 py-1.5 text-sm font-medium transition-colors {$page.url.pathname.startsWith(
+									item.href
+								)
+									? 'bg-primary text-primary-foreground'
+									: 'text-muted-foreground hover:text-foreground'}"
 							>
 								{item.label}
 							</a>
 						{/if}
 					{/each}
-					<button
-						type="button"
-						class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-						onclick={() => auth.signOut()}
-					>
+					<ThemeToggle />
+					<Button variant="outline" size="sm" class="rounded-full" onclick={() => auth.signOut()}>
 						Sign out
-					</button>
+					</Button>
 				</nav>
 			</div>
 		</header>
@@ -59,14 +64,9 @@
 	</div>
 {:else}
 	<div class="flex min-h-screen items-center justify-center px-6">
-		<div class="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-			<p class="text-slate-600">Please sign in to access FamilyOS.</p>
-			<a
-				href={resolve('/auth/login')}
-				class="mt-4 inline-block text-sm font-medium text-indigo-600"
-			>
-				Go to sign in
-			</a>
+		<div class="rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+			<p class="text-muted-foreground">Please sign in to access FamilyOS.</p>
+			<Button href={resolve('/auth/login')} class="mt-4 rounded-full">Go to sign in</Button>
 		</div>
 	</div>
 {/if}

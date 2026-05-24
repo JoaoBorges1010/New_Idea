@@ -2,11 +2,15 @@
 	import { useConvexClient, useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api.js';
 	import type { Id } from '$convex/_generated/dataModel.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
 
 	const client = useConvexClient();
 	const documents = useQuery(api.domains.documents.vault.listDocuments, {});
 
-	let fileInput: HTMLInputElement | undefined = $state();
+	let fileInput = $state<HTMLInputElement | null>(null);
 	let uploading = $state(false);
 	let error = $state('');
 	let category = $state('other');
@@ -27,9 +31,7 @@
 				body: file
 			});
 
-			if (!uploadResponse.ok) {
-				throw new Error('Upload failed');
-			}
+			if (!uploadResponse.ok) throw new Error('Upload failed');
 
 			const { storageId } = (await uploadResponse.json()) as { storageId: Id<'_storage'> };
 
@@ -57,78 +59,70 @@
 
 <div class="space-y-6">
 	<div>
-		<h1 class="text-2xl font-semibold text-slate-900">Document Vault</h1>
-		<p class="mt-1 text-sm text-slate-600">
+		<h1 class="text-3xl font-medium tracking-tight">Document Vault</h1>
+		<p class="mt-1 text-muted-foreground">
 			Shared storage for bills, receipts, contracts, and more.
 		</p>
 	</div>
 
-	<form
-		class="rounded-xl border border-slate-200 bg-white p-5"
-		onsubmit={handleUpload}
-		enctype="multipart/form-data"
-	>
-		<div class="grid gap-4 md:grid-cols-3">
-			<label class="block md:col-span-2">
-				<span class="text-sm font-medium text-slate-700">File</span>
-				<input
-					bind:this={fileInput}
-					type="file"
-					accept=".pdf,image/*"
-					required
-					class="mt-1 block w-full text-sm"
-				/>
-			</label>
-			<label class="block">
-				<span class="text-sm font-medium text-slate-700">Category</span>
-				<select
-					bind:value={category}
-					class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-				>
-					<option value="bill">Bill</option>
-					<option value="receipt">Receipt</option>
-					<option value="contract">Contract</option>
-					<option value="other">Other</option>
-				</select>
-			</label>
-		</div>
-		{#if error}
-			<p class="mt-3 text-sm text-red-600">{error}</p>
-		{/if}
-		<button
-			type="submit"
-			disabled={uploading}
-			class="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
-		>
-			{uploading ? 'Uploading...' : 'Upload document'}
-		</button>
-	</form>
+	<Card.Root class="rounded-2xl">
+		<Card.Header>
+			<Card.Title>Upload</Card.Title>
+		</Card.Header>
+		<Card.Content>
+			<form class="space-y-4" onsubmit={handleUpload} enctype="multipart/form-data">
+				<div class="grid gap-4 md:grid-cols-3">
+					<div class="space-y-2 md:col-span-2">
+						<Label for="file">File</Label>
+						<Input bind:ref={fileInput} id="file" type="file" accept=".pdf,image/*" required />
+					</div>
+					<div class="space-y-2">
+						<Label for="category">Category</Label>
+						<select
+							id="category"
+							bind:value={category}
+							class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						>
+							<option value="bill">Bill</option>
+							<option value="receipt">Receipt</option>
+							<option value="contract">Contract</option>
+							<option value="other">Other</option>
+						</select>
+					</div>
+				</div>
+				{#if error}
+					<p class="text-sm text-destructive">{error}</p>
+				{/if}
+				<Button type="submit" disabled={uploading} class="rounded-full">
+					{uploading ? 'Uploading...' : 'Upload document'}
+				</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
 
 	{#if documents.isLoading}
-		<p class="text-slate-500">Loading documents...</p>
+		<p class="text-muted-foreground">Loading documents...</p>
 	{:else if documents.error}
-		<p class="text-red-600">Failed to load documents.</p>
+		<p class="text-destructive">Failed to load documents.</p>
 	{:else if !documents.data?.length}
-		<p class="text-slate-500">No documents uploaded yet.</p>
+		<p class="text-muted-foreground">No documents uploaded yet.</p>
 	{:else}
-		<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
-			{#each documents.data as document (document._id)}
-				<li class="flex items-center justify-between px-4 py-3">
-					<div>
-						<p class="font-medium text-slate-900">{document.fileName}</p>
-						<p class="text-sm text-slate-500">
-							{document.category} · {new Date(document.uploadedAt).toLocaleDateString()}
-						</p>
+		<Card.Root class="rounded-2xl">
+			<Card.Content class="divide-y divide-border p-0">
+				{#each documents.data as document (document._id)}
+					<div class="flex items-center justify-between px-4 py-3">
+						<div>
+							<p class="font-medium">{document.fileName}</p>
+							<p class="text-sm text-muted-foreground">
+								{document.category} · {new Date(document.uploadedAt).toLocaleDateString()}
+							</p>
+						</div>
+						<Button variant="ghost" size="sm" onclick={() => openDocument(document._id)}>
+							Open
+						</Button>
 					</div>
-					<button
-						type="button"
-						class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-						onclick={() => openDocument(document._id)}
-					>
-						Open
-					</button>
-				</li>
-			{/each}
-		</ul>
+				{/each}
+			</Card.Content>
+		</Card.Root>
 	{/if}
 </div>

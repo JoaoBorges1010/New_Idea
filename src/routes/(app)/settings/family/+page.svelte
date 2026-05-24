@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { useConvexClient, useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
 
 	const client = useConvexClient();
 	const members = useQuery(api.domains.families.members.listMembers, {});
@@ -25,8 +29,8 @@
 
 <div class="space-y-6">
 	<div>
-		<h1 class="text-2xl font-semibold text-slate-900">Family settings</h1>
-		<p class="mt-1 text-sm text-slate-600">
+		<h1 class="text-3xl font-medium tracking-tight">Family settings</h1>
+		<p class="mt-1 text-muted-foreground">
 			{#if currentUser.data?.family}
 				Managing {currentUser.data.family.name}
 			{:else}
@@ -35,49 +39,51 @@
 		</p>
 	</div>
 
-	<form class="rounded-xl border border-slate-200 bg-white p-5" onsubmit={addMember}>
-		<h2 class="font-medium text-slate-900">Add member</h2>
-		<div class="mt-4 grid gap-4 md:grid-cols-2">
-			<label class="block">
-				<span class="text-sm font-medium text-slate-700">Name</span>
-				<input
-					type="text"
-					required
-					bind:value={name}
-					class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-				/>
-			</label>
-			<label class="block">
-				<span class="text-sm font-medium text-slate-700">Role</span>
-				<select bind:value={role} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-					<option value="adult">Adult</option>
-					<option value="child">Child</option>
-				</select>
-			</label>
-		</div>
-		{#if error}
-			<p class="mt-3 text-sm text-red-600">{error}</p>
-		{/if}
-		<button
-			type="submit"
-			class="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-		>
-			Add member
-		</button>
-	</form>
+	<Card.Root class="rounded-2xl">
+		<Card.Header>
+			<Card.Title>Add member</Card.Title>
+		</Card.Header>
+		<Card.Content>
+			<form class="space-y-4" onsubmit={addMember}>
+				<div class="grid gap-4 md:grid-cols-2">
+					<div class="space-y-2">
+						<Label for="name">Name</Label>
+						<Input id="name" type="text" required bind:value={name} />
+					</div>
+					<div class="space-y-2">
+						<Label for="role">Role</Label>
+						<select
+							id="role"
+							bind:value={role}
+							class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						>
+							<option value="adult">Adult</option>
+							<option value="child">Child</option>
+						</select>
+					</div>
+				</div>
+				{#if error}
+					<p class="text-sm text-destructive">{error}</p>
+				{/if}
+				<Button type="submit" class="rounded-full">Add member</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
 
 	{#if members.isLoading}
-		<p class="text-slate-500">Loading members...</p>
+		<p class="text-muted-foreground">Loading members...</p>
 	{:else if members.error}
-		<p class="text-red-600">Failed to load members.</p>
+		<p class="text-destructive">Failed to load members.</p>
 	{:else}
-		<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
-			{#each members.data ?? [] as member (member._id)}
-				<li class="px-4 py-3">
-					<p class="font-medium text-slate-900">{member.name}</p>
-					<p class="text-sm text-slate-500 capitalize">{member.role}</p>
-				</li>
-			{/each}
-		</ul>
+		<Card.Root class="rounded-2xl">
+			<Card.Content class="divide-y divide-border p-0">
+				{#each members.data ?? [] as member (member._id)}
+					<div class="px-4 py-3">
+						<p class="font-medium">{member.name}</p>
+						<p class="text-sm text-muted-foreground capitalize">{member.role}</p>
+					</div>
+				{/each}
+			</Card.Content>
+		</Card.Root>
 	{/if}
 </div>

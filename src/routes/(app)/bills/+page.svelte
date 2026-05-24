@@ -2,6 +2,10 @@
 	import { useConvexClient, useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api.js';
 	import type { Id } from '$convex/_generated/dataModel.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
 
 	const client = useConvexClient();
 	const payments = useQuery(api.domains.bills.processing.listPendingPayments, {});
@@ -48,76 +52,82 @@
 
 <div class="space-y-8">
 	<div>
-		<h1 class="text-2xl font-semibold text-slate-900">Bills</h1>
-		<p class="mt-1 text-sm text-slate-600">AI-assisted bill parsing and pending payments.</p>
+		<h1 class="text-3xl font-medium tracking-tight">Bills</h1>
+		<p class="mt-1 text-muted-foreground">AI-assisted bill parsing and pending payments.</p>
 	</div>
 
-	<form class="rounded-xl border border-slate-200 bg-white p-5" onsubmit={processBill}>
-		<h2 class="font-medium text-slate-900">Process a bill</h2>
-		<p class="mt-1 text-sm text-slate-500">
-			Upload a bill PDF in the Vault first, then select it here for AI extraction.
-		</p>
-		<label class="mt-4 block">
-			<span class="text-sm font-medium text-slate-700">Bill document</span>
-			<select
-				bind:value={selectedDocumentId}
-				required
-				class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-			>
-				<option value="">Select a document</option>
-				{#each documents.data ?? [] as document (document._id)}
-					<option value={document._id}>{document.fileName}</option>
-				{/each}
-			</select>
-		</label>
-		{#if message}
-			<p class="mt-3 text-sm text-green-700">{message}</p>
-		{/if}
-		{#if error}
-			<p class="mt-3 text-sm text-red-600">{error}</p>
-		{/if}
-		<button
-			type="submit"
-			disabled={processing}
-			class="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
-		>
-			{processing ? 'Processing...' : 'Extract bill details'}
-		</button>
-	</form>
+	<Card.Root class="rounded-2xl">
+		<Card.Header>
+			<Card.Title>Process a bill</Card.Title>
+			<Card.Description>
+				Upload a bill PDF in the Vault first, then select it here for AI extraction.
+			</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<form class="space-y-4" onsubmit={processBill}>
+				<div class="space-y-2">
+					<Label for="document">Bill document</Label>
+					<select
+						id="document"
+						bind:value={selectedDocumentId}
+						required
+						class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+					>
+						<option value="">Select a document</option>
+						{#each documents.data ?? [] as document (document._id)}
+							<option value={document._id}>{document.fileName}</option>
+						{/each}
+					</select>
+				</div>
+				{#if message}
+					<p class="text-sm text-primary">{message}</p>
+				{/if}
+				{#if error}
+					<p class="text-sm text-destructive">{error}</p>
+				{/if}
+				<Button type="submit" disabled={processing} class="rounded-full">
+					{processing ? 'Processing...' : 'Extract bill details'}
+				</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
 
-	<section>
-		<h2 class="font-medium text-slate-900">Pending payments</h2>
+	<section class="space-y-3">
+		<h2 class="text-xl font-medium tracking-tight">Pending payments</h2>
 		{#if payments.isLoading}
-			<p class="mt-2 text-slate-500">Loading payments...</p>
+			<p class="text-muted-foreground">Loading payments...</p>
 		{:else if payments.error}
-			<p class="mt-2 text-red-600">Failed to load payments.</p>
+			<p class="text-destructive">Failed to load payments.</p>
 		{:else if !payments.data?.length}
-			<p class="mt-2 text-slate-500">No pending payments yet.</p>
+			<p class="text-muted-foreground">No pending payments yet.</p>
 		{:else}
-			<ul class="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
-				{#each payments.data as payment (payment._id)}
-					<li class="flex items-center justify-between px-4 py-3">
-						<div>
-							<p class="font-medium text-slate-900">{payment.vendorName}</p>
-							<p class="text-sm text-slate-500">
-								${payment.amountDue.toFixed(2)} · due {new Date(
-									payment.dueDate
-								).toLocaleDateString()}
-								· {payment.status}
-							</p>
+			<Card.Root class="rounded-2xl">
+				<Card.Content class="divide-y divide-border p-0">
+					{#each payments.data as payment (payment._id)}
+						<div class="flex items-center justify-between px-4 py-3">
+							<div>
+								<p class="font-medium">{payment.vendorName}</p>
+								<p class="text-sm text-muted-foreground">
+									${payment.amountDue.toFixed(2)} · due {new Date(
+										payment.dueDate
+									).toLocaleDateString()}
+								</p>
+								<Badge variant="secondary" class="mt-1 capitalize">{payment.status}</Badge>
+							</div>
+							{#if payment.status === 'pending'}
+								<Button
+									variant="outline"
+									size="sm"
+									class="rounded-full"
+									onclick={() => markReviewed(payment._id)}
+								>
+									Mark reviewed
+								</Button>
+							{/if}
 						</div>
-						{#if payment.status === 'pending'}
-							<button
-								type="button"
-								class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-								onclick={() => markReviewed(payment._id)}
-							>
-								Mark reviewed
-							</button>
-						{/if}
-					</li>
-				{/each}
-			</ul>
+					{/each}
+				</Card.Content>
+			</Card.Root>
 		{/if}
 	</section>
 </div>

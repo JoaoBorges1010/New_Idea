@@ -1,0 +1,249 @@
+diff --git a/node_modules/@appulsauce/svelte-grid/dist/GridItem.svelte b/node_modules/@appulsauce/svelte-grid/dist/GridItem.svelte
+index 4685134..3df165a 100644
+--- a/node_modules/@appulsauce/svelte-grid/dist/GridItem.svelte
++++ b/node_modules/@appulsauce/svelte-grid/dist/GridItem.svelte
+@@ -146,6 +146,79 @@
+ 		gridParams.updateGrid();
+ 	}
+ 
++	type DragSnapshot = {
++		preview: { x: number; y: number; w: number; h: number };
++		items: Array<{ id: string; x: number; y: number; w: number; h: number }>;
++	};
++
++	let dragSnapshot: DragSnapshot | null = null;
++
++	function captureDragSnapshot() {
++		dragSnapshot = {
++			preview: { x: item.x, y: item.y, w: item.w, h: item.h },
++			items: Object.values(gridParams.items).map((gridItem) => ({
++				id: gridItem.id,
++				x: gridItem.x,
++				y: gridItem.y,
++				w: gridItem.w,
++				h: gridItem.h
++			}))
++		};
++	}
++
++	function touchesLockedItem(candidate: LayoutItem) {
++		const lockedItems = Object.values(gridParams.items).filter(
++			(gridItem) => gridItem.id !== previewItem.id && !gridItem.movable
++		);
++		return lockedItems.length > 0 && hasCollisions(candidate, lockedItems);
++	}
++
++	function hasOverlapWithOthers(candidate: LayoutItem) {
++		const others = Object.values(gridParams.items).filter(
++			(gridItem) => gridItem.id !== previewItem.id
++		);
++		return hasCollisions(candidate, others);
++	}
++
++	function isValidPlacement(candidate: LayoutItem) {
++		return !hasOverlapWithOthers(candidate);
++	}
++
++	function restoreDragSnapshot() {
++		if (!dragSnapshot || !gridParams.itemSize) return;
++
++		const snap = dragSnapshot;
++		previewItem = { ...previewItem, ...snap.preview };
++
++		for (const itemSnap of snap.items) {
++			const gridItem = gridParams.items[itemSnap.id];
++			if (!gridItem) continue;
++			gridItem.x = itemSnap.x;
++			gridItem.y = itemSnap.y;
++			gridItem.w = itemSnap.w;
++			gridItem.h = itemSnap.h;
++			if (gridItem.id !== previewItem.id) {
++				gridItem.invalidate();
++			}
++		}
++
++		item.x = snap.preview.x;
++		item.y = snap.preview.y;
++		item.w = snap.preview.w;
++		item.h = snap.preview.h;
++		item.invalidate();
++
++		const pos = calcPosition(previewItem, {
++			itemSize: gridParams.itemSize,
++			gap: gridParams.gap
++		});
++		left = pos.left;
++		top = pos.top;
++		width = pos.width;
++		height = pos.height;
++		gridParams.updateGrid();
++	}
++
+ 	// MOVE ITEM LOGIC
+ 
+ 	let initialPosition = { left: 0, top: 0 };
+@@ -157,6 +230,7 @@
+ 		event.stopPropagation();
+ 		initInteraction(event);
+ 		initialPosition = { left, top };
++		captureDragSnapshot();
+ 		window.addEventListener('pointermove', move);
+ 		window.addEventListener('pointerup', moveEnd);
+ 	}
+@@ -201,6 +275,8 @@
+ 	}
+ 
+ 	function updateCollItemPositionWithPush(collItem: LayoutItem, items: LayoutItem[]) {
++		if (!collItem.movable) return;
++
+ 		const newPosition = getAvailablePosition(collItem, items, gridParams.maxCols, gridParams.maxRows);
+ 		if (newPosition) {
+ 			const { x, y } = newPosition;
+@@ -214,20 +290,34 @@
+ 	function handleCollisionsForPreviewItemWithPush(newAttributes: { x?: number; y?: number; w?: number; h?: number }) {
+ 		const gridItems = Object.values(gridParams.items);
+ 		const itemsExceptPreview = gridItems.filter((item) => item.id != previewItem.id);
+-		const collItems = getCollisions({ ...previewItem, ...newAttributes }, itemsExceptPreview);
++		const nextPreview = { ...previewItem, ...newAttributes };
++
++		if (touchesLockedItem(nextPreview)) {
++			restoreDragSnapshot();
++			return;
++		}
++
++		const movableItems = itemsExceptPreview.filter((item) => item.movable);
++		const collItems = getCollisions(nextPreview, movableItems);
+ 
+ 		collItems.forEach((collItem: LayoutItem) => {
+ 			const itemsExceptCollItem = gridItems.filter((item) => item.id != collItem.id);
+ 			const items = [
+ 				...itemsExceptCollItem.filter((item) => item.id != previewItem.id),
+-				{ ...previewItem, ...newAttributes }
++				nextPreview
+ 			];
+ 			updateCollItemPositionWithPush(collItem, items);
+ 		});
+ 
+-		previewItem = { ...previewItem, ...newAttributes };
++		if (!isValidPlacement(nextPreview)) {
++			restoreDragSnapshot();
++			return;
++		}
++
++		previewItem = nextPreview;
++		item.x = previewItem.x;
++		item.y = previewItem.y;
+ 		gridParams.updateGrid();
+-		applyPreview();
+ 	}
+ 
+ 	function movePreviewWithCollisionsWithPush(x: number, y: number) {
+@@ -287,9 +377,31 @@
+ 
+ 	function moveEnd(event: PointerEvent) {
+ 		if (event.button !== 0) return;
+-		endInteraction(event);
+ 		window.removeEventListener('pointermove', move);
+ 		window.removeEventListener('pointerup', moveEnd);
++
++		if (gridParams.itemSize) {
++			const snapParams = gridParams as SnapGridParams;
++			const { x: newX, y: newY } = snapOnMove(left, top, previewItem, snapParams);
++			if (gridParams.collision !== 'none') {
++				handleCollisionsForPreviewItemWithPush({ x: newX, y: newY });
++			} else if (!hasOverlapWithOthers({ ...previewItem, x: newX, y: newY })) {
++				previewItem = { ...previewItem, x: newX, y: newY };
++			}
++		}
++
++		if (!isValidPlacement(previewItem)) {
++			restoreDragSnapshot();
++		} else {
++			applyPreview();
++		}
++
++		active = false;
++		dragSnapshot = null;
++		initialPointerPosition.left = 0;
++		initialPointerPosition.top = 0;
++		itemRef.releasePointerCapture(event.pointerId);
++		gridParams.updateGrid();
+ 	}
+ 
+ 	// RESIZE ITEM LOGIC
+@@ -323,6 +435,7 @@
+ 		event.stopPropagation();
+ 		initInteraction(event);
+ 		initialSize = { width, height };
++		captureDragSnapshot();
+ 		window.addEventListener('pointermove', resize);
+ 		window.addEventListener('pointerup', resizeEnd);
+ 	}
+@@ -395,9 +508,31 @@
+ 
+ 	function resizeEnd(event: PointerEvent) {
+ 		if (event.button !== 0) return;
+-		endInteraction(event);
+ 		window.removeEventListener('pointermove', resize);
+ 		window.removeEventListener('pointerup', resizeEnd);
++
++		if (gridParams.itemSize) {
++			const snapParams = gridParams as SnapGridParams;
++			const { w: newW, h: newH } = snapOnResize(width, height, previewItem, snapParams);
++			if (gridParams.collision !== 'none') {
++				handleCollisionsForPreviewItemWithPush({ w: newW, h: newH });
++			} else if (!hasOverlapWithOthers({ ...previewItem, w: newW, h: newH })) {
++				previewItem = { ...previewItem, w: newW, h: newH };
++			}
++		}
++
++		if (!isValidPlacement(previewItem)) {
++			restoreDragSnapshot();
++		} else {
++			applyPreview();
++		}
++
++		active = false;
++		dragSnapshot = null;
++		initialPointerPosition.left = 0;
++		initialPointerPosition.top = 0;
++		itemRef.releasePointerCapture(event.pointerId);
++		gridParams.updateGrid();
+ 	}
+ 
+ 	function compressItems() {
+@@ -498,24 +633,25 @@
+ <style>
+ 	.item-default {
+ 		transition:
+-			width 0.2s,
+-			height 0.2s;
+-		transition:
+-			transform 0.2s,
+-			opacity 0.2s;
++			width 0.85s cubic-bezier(0.22, 1, 0.36, 1),
++			height 0.85s cubic-bezier(0.22, 1, 0.36, 1),
++			transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
++			opacity 0.2s ease-out;
+ 	}
+ 	.active-default {
+ 		opacity: 0.7;
++		transition: none;
+ 	}
+ 	.item-preview-default {
+ 		background-color: rgb(192, 127, 127);
+-		transition: all 0.2s;
++		transition: all 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+ 	}
+ 	.non-active-default {
+ 		transition:
+-			left 0.2s,
+-			top 0.2s;
+-		transition-timing-function: ease-in-out;
++			left 0.85s cubic-bezier(0.22, 1, 0.36, 1),
++			top 0.85s cubic-bezier(0.22, 1, 0.36, 1),
++			width 0.85s cubic-bezier(0.22, 1, 0.36, 1),
++			height 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+ 	}
+ 	.resizer-default {
+ 		-webkit-user-select: none;

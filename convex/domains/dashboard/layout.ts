@@ -7,7 +7,8 @@ const dashboardWidgetValidator = v.object({
 	x: v.number(),
 	y: v.number(),
 	w: v.number(),
-	h: v.number()
+	h: v.number(),
+	locked: v.optional(v.boolean())
 });
 
 const ALLOWED_WIDGET_IDS = new Set(['attention-feed', 'finance', 'tasks']);

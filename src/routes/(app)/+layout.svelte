@@ -3,65 +3,37 @@
 	import { resolve } from '$app/paths';
 	import { useAuth } from '@mmailaender/convex-auth-svelte/sveltekit';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import ThemeToggle from '$lib/components/ui/theme-toggle.svelte';
+	import AppSidebar from '$lib/components/app-sidebar.svelte';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
 
 	const auth = useAuth();
 	const isAuthenticated = $derived(auth.isAuthenticated);
 	const isLoading = $derived(auth.isLoading);
 
 	let { children } = $props();
-
-	const navItems: Array<{ href: string; label: string; disabled?: boolean }> = [
-		{ href: '/dashboard', label: 'Dashboard' },
-		{ href: '/vault', label: 'Vault' },
-		{ href: '/bills', label: 'Bills' },
-		{ href: '/settings/family', label: 'Family' },
-		{ href: '/finance', label: 'Finance', disabled: true }
-	];
 </script>
 
 {#if isLoading}
 	<div class="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>
 {:else if isAuthenticated}
-	<div class="min-h-screen bg-background">
-		<header class="sticky top-0 z-40 px-4 pt-4">
-			<div
-				class="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-border bg-background/80 px-4 py-2 shadow-sm backdrop-blur-md"
+	<Sidebar.Provider>
+		<AppSidebar />
+		<Sidebar.Inset>
+			<header
+				class="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md"
 			>
-				<div>
-					<p class="text-sm font-semibold tracking-tight text-primary">FamilyOS</p>
-					<p class="text-xs text-muted-foreground">Household platform</p>
-				</div>
-				<nav class="flex items-center gap-1 md:gap-3">
-					{#each navItems as item (item.href)}
-						{#if item.disabled}
-							<span class="cursor-not-allowed px-2 text-sm text-muted-foreground/50"
-								>{item.label}</span
-							>
-						{:else}
-							<a
-								href={resolve(item.href as '/dashboard')}
-								class="rounded-full px-3 py-1.5 text-sm font-medium transition-colors {$page.url.pathname.startsWith(
-									item.href
-								)
-									? 'bg-primary text-primary-foreground'
-									: 'text-muted-foreground hover:text-foreground'}"
-							>
-								{item.label}
-							</a>
-						{/if}
-					{/each}
-					<ThemeToggle />
-					<Button variant="outline" size="sm" class="rounded-full" onclick={() => auth.signOut()}>
-						Sign out
-					</Button>
-				</nav>
-			</div>
-		</header>
-		<main class="mx-auto max-w-6xl px-6 py-8">
-			{@render children()}
-		</main>
-	</div>
+				<Sidebar.Trigger class="-ml-1" />
+				<Separator orientation="vertical" class="mr-2 h-4!" />
+				<p class="text-sm font-medium capitalize text-muted-foreground">
+					{$page.url.pathname.split('/').filter(Boolean)[0] ?? 'Home'}
+				</p>
+			</header>
+			<main class="flex-1 p-6">
+				{@render children()}
+			</main>
+		</Sidebar.Inset>
+	</Sidebar.Provider>
 {:else}
 	<div class="flex min-h-screen items-center justify-center px-6">
 		<div class="rounded-2xl border border-border bg-card p-8 text-center shadow-sm">

@@ -75,7 +75,7 @@
 			{#each members.data ?? [] as member (member._id)}
 				<li class="px-4 py-3">
 					<p class="font-medium text-slate-900">{member.name}</p>
-					<p class="text-sm capitalize text-slate-500">{member.role}</p>
+					<p class="text-sm text-slate-500 capitalize">{member.role}</p>
 				</li>
 			{/each}
 		</ul>

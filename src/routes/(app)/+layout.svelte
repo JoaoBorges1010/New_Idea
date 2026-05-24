@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { useAuth } from '@mmailaender/convex-auth-svelte/sveltekit';
 
 	const auth = useAuth();
@@ -33,7 +34,7 @@
 							<span class="cursor-not-allowed text-sm text-slate-300">{item.label}</span>
 						{:else}
 							<a
-								href={item.href}
+								href={resolve(item.href)}
 								class="text-sm font-medium {$page.url.pathname.startsWith(item.href)
 									? 'text-indigo-600'
 									: 'text-slate-600 hover:text-slate-900'}"
@@ -60,7 +61,10 @@
 	<div class="flex min-h-screen items-center justify-center px-6">
 		<div class="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
 			<p class="text-slate-600">Please sign in to access FamilyOS.</p>
-			<a href="/auth/login" class="mt-4 inline-block text-sm font-medium text-indigo-600">
+			<a
+				href={resolve('/auth/login')}
+				class="mt-4 inline-block text-sm font-medium text-indigo-600"
+			>
 				Go to sign in
 			</a>
 		</div>

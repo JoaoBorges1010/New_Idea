@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { useAuth } from '@mmailaender/convex-auth-svelte/sveltekit';
 	import { useConvexClient } from 'convex-svelte';
 	import { api } from '$convex/_generated/api.js';
@@ -25,7 +26,7 @@
 				name: familyName,
 				displayName: name
 			});
-			await goto('/dashboard');
+			await goto(resolve('/dashboard'));
 		} catch {
 			error = 'Sign up failed. The email may already be in use.';
 		} finally {
@@ -91,7 +92,7 @@
 
 		<p class="mt-4 text-sm text-slate-600">
 			Already have an account?
-			<a href="/auth/login" class="font-medium text-indigo-600">Sign in</a>
+			<a href={resolve('/auth/login')} class="font-medium text-indigo-600">Sign in</a>
 		</p>
 	</div>
 </section>

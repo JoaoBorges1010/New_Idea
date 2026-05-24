@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { useQuery } from 'convex-svelte';
 	import { api } from '$convex/_generated/api.js';
 
@@ -18,9 +19,7 @@
 	{:else if !feed.data?.length}
 		<div class="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
 			<p class="font-medium text-slate-700">All clear for now</p>
-			<p class="mt-1 text-sm text-slate-500">
-				Upload a bill or document to see items here.
-			</p>
+			<p class="mt-1 text-sm text-slate-500">Upload a bill or document to see items here.</p>
 		</div>
 	{:else}
 		<ul class="space-y-3">
@@ -28,7 +27,7 @@
 				<li class="rounded-xl border border-slate-200 bg-white p-4">
 					<div class="flex items-start justify-between gap-4">
 						<div>
-							<p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+							<p class="text-xs font-medium tracking-wide text-slate-400 uppercase">
 								{item.domain}
 							</p>
 							<p class="mt-1 font-medium text-slate-900">{item.title}</p>
@@ -38,7 +37,10 @@
 								</p>
 							{/if}
 						</div>
-						<a href={item.href} class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+						<a
+							href={resolve(item.href)}
+							class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+						>
 							View
 						</a>
 					</div>

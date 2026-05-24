@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { resolve } from '$app/paths';
 	import { useAuth } from '@mmailaender/convex-auth-svelte/sveltekit';
 
 	const auth = useAuth();
@@ -18,7 +19,7 @@
 		try {
 			await auth.signIn('password', { email, password, flow: 'signIn' });
 			const redirectTo = $page.url.searchParams.get('redirectTo') ?? '/dashboard';
-			await goto(redirectTo);
+			await goto(redirectTo.startsWith('/') ? resolve(redirectTo) : resolve('/dashboard'));
 		} catch {
 			error = 'Sign in failed. Check your email and password.';
 		} finally {
@@ -66,7 +67,7 @@
 
 		<p class="mt-4 text-sm text-slate-600">
 			No account?
-			<a href="/auth/signup" class="font-medium text-indigo-600">Create one</a>
+			<a href={resolve('/auth/signup')} class="font-medium text-indigo-600">Create one</a>
 		</p>
 	</div>
 </section>

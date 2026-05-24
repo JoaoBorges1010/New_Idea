@@ -58,7 +58,9 @@
 <div class="space-y-6">
 	<div>
 		<h1 class="text-2xl font-semibold text-slate-900">Document Vault</h1>
-		<p class="mt-1 text-sm text-slate-600">Shared storage for bills, receipts, contracts, and more.</p>
+		<p class="mt-1 text-sm text-slate-600">
+			Shared storage for bills, receipts, contracts, and more.
+		</p>
 	</div>
 
 	<form
@@ -79,7 +81,10 @@
 			</label>
 			<label class="block">
 				<span class="text-sm font-medium text-slate-700">Category</span>
-				<select bind:value={category} class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+				<select
+					bind:value={category}
+					class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+				>
 					<option value="bill">Bill</option>
 					<option value="receipt">Receipt</option>
 					<option value="contract">Contract</option>

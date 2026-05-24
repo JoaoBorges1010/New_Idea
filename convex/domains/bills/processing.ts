@@ -125,18 +125,18 @@ export const processBillUpload = action({
 	handler: async (
 		ctx,
 		args
-	): Promise<
-		| { success: true; paymentId: string }
-		| { success: false; error: string }
-	> => {
+	): Promise<{ success: true; paymentId: string } | { success: false; error: string }> => {
 		const identity = await ctx.auth.getUserIdentity();
 		if (identity === null) {
 			throw new Error('Not authenticated');
 		}
 
-		const document = await ctx.runQuery(internal.domains.bills.processing.getDocumentForProcessing, {
-			documentId: args.documentId
-		});
+		const document = await ctx.runQuery(
+			internal.domains.bills.processing.getDocumentForProcessing,
+			{
+				documentId: args.documentId
+			}
+		);
 
 		const fileUrl = await ctx.storage.getUrl(document.storageId);
 		if (fileUrl === null) {
@@ -173,14 +173,17 @@ export const processBillUpload = action({
 			return { success: false as const, error: 'Bill extraction confidence too low' };
 		}
 
-		const paymentId = await ctx.runMutation(internal.domains.bills.processing.createPendingPayment, {
-			familyId: document.familyId,
-			documentId: args.documentId,
-			vendorName: data.vendorName,
-			amountDue: data.amountDue,
-			dueDate: parseDueDate(data.dueDate),
-			paymentDetails: data.paymentDetails
-		});
+		const paymentId = await ctx.runMutation(
+			internal.domains.bills.processing.createPendingPayment,
+			{
+				familyId: document.familyId,
+				documentId: args.documentId,
+				vendorName: data.vendorName,
+				amountDue: data.amountDue,
+				dueDate: parseDueDate(data.dueDate),
+				paymentDetails: data.paymentDetails
+			}
+		);
 
 		return { success: true as const, paymentId };
 	}

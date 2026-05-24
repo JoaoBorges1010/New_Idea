@@ -1,42 +1,61 @@
-# sv
+# FamilyOS
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Multi-domain household platform built with SvelteKit, Convex, and Tailwind CSS.
 
-## Creating a project
+## Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Frontend:** SvelteKit + Tailwind CSS
+- **Backend:** Convex (real-time DB, file storage, serverless functions)
+- **Auth:** Convex Auth (email/password)
 
-```sh
-# create a new project
-npx sv create my-app
+## Architecture
+
+- **Domain modules** (`convex/domains/`) — orchestration per feature (families, documents, bills, dashboard)
+- **Shared services** (`convex/services/`) — domain-agnostic mechanics (AI parsing, file storage)
+- **Shared lib** (`convex/lib/`) — auth guards, attention-item types
+
+## Getting started
+
+1. Copy environment variables:
+
+```bash
+cp .env.example .env.local
 ```
 
-To recreate this project with the same configuration:
+2. Install dependencies:
 
-```sh
-# recreate this project
-npx sv@0.15.3 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" sveltekit-adapter="adapter:auto" --no-download-check --install npm .
+```bash
+npm install
 ```
 
-## Developing
+3. Start Convex (in one terminal):
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```bash
+npx convex dev
+```
 
-```sh
+4. Start SvelteKit (in another terminal):
+
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+5. Open [http://localhost:5173](http://localhost:5173)
 
-To create a production version of your app:
+## Bill Engine
 
-```sh
-npm run build
+Set `OPENAI_API_KEY` in your Convex deployment for AI bill parsing:
+
+```bash
+npx convex env set OPENAI_API_KEY your-key-here
 ```
 
-You can preview the production build with `npm run preview`.
+## Routes
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+| Route              | Description                           |
+| ------------------ | ------------------------------------- |
+| `/dashboard`       | Cross-domain attention feed           |
+| `/vault`           | Shared document vault                 |
+| `/bills`           | Bill processing and pending payments  |
+| `/settings/family` | Family member management              |
+| `/finance`         | Placeholder for future finance domain |

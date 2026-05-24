@@ -100,7 +100,9 @@
 						<div>
 							<p class="font-medium text-slate-900">{payment.vendorName}</p>
 							<p class="text-sm text-slate-500">
-								${payment.amountDue.toFixed(2)} · due {new Date(payment.dueDate).toLocaleDateString()}
+								${payment.amountDue.toFixed(2)} · due {new Date(
+									payment.dueDate
+								).toLocaleDateString()}
 								· {payment.status}
 							</p>
 						</div>
